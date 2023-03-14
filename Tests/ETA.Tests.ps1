@@ -1,3 +1,5 @@
+#Requires -Modules @{ ModuleName='Pester'; ModuleVersion='5.4.0' }
+
 BeforeAll {
     Import-Module "$PSScriptRoot/../ETA.psd1"
 }
@@ -125,6 +127,24 @@ Describe Get-ETA {
         Start-Sleep -Seconds 1
         Invoke-ETATrigger -ETA $myETA
         $myETA.Value | Should -BeGreaterThan ([timespan]0)
+    }
+
+}
+
+Describe 'ETA Instance' {
+
+    BeforeAll {
+        $myETA = New-ETA -MaximumEvents 3
+    }
+
+    It 'Should return readable string in string concatenations' {
+
+        Invoke-ETATrigger -ETA $myETA
+        Start-Sleep -Seconds 2
+        Invoke-ETATrigger -ETA $myETA
+        Start-Sleep -Seconds 1
+        "$myETA" -match '\d+ s' | Should -Be $true
+
     }
 
 }
