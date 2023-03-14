@@ -54,7 +54,12 @@ class ETA {
         # because we do not divide by the amount of triggers, but by the amount of gaps between triggers.
         if ( $this.TriggerCount -gt 1 ) {
             $this.TriggerAverageTime = [timespan]::FromTicks( ( $this.CurrentTrigger.Ticks - $this.StartTime.Ticks ) / ( $this.TriggerCount - 1 ) )
-            $this.Value = ( $this.TriggerLimit - $this.TriggerCount ) * $this.TriggerAverageTime
+            
+            # Powershell 6+
+            # $this.Value = ( $this.TriggerLimit - $this.TriggerCount ) * $this.TriggerAverageTime.Ticks
+
+            # Powershell 5.1 compatible
+            $this.Value = [timespan]::FromTicks( ( $this.TriggerLimit - $this.TriggerCount ) * $this.TriggerAverageTime.Ticks )
         }
 
         $this.PercentCompleted = [math]::Round( $this.TriggerCount * 100 / $this.TriggerLimit, 0, 1 )
@@ -222,27 +227,3 @@ function Get-ETA {
 }
 
 #endregion WRAPPER_FUNCTIONS
-
-#region DEMO
-
-if ( $MyInvocation.InvocationName -eq '&' ) {
-    $Iterations = 11
-    $Eta = [ETA]::new( $Iterations )
-    $Progress = @{
-        Id = 0
-        Activity = "Demoing ETA time estimating class for {0} random intervals" -f ( $Iterations - 1 )
-        Status = [string]$Eta
-        PercentComplete = $Eta.PercentCompleted
-    }
-    Write-Progress @Progress
-    foreach ( $i in 1..$Iterations ) {
-        $Eta.Trigger()
-        $Progress.Status = [string]$Eta
-        $Progress.PercentComplete = $Eta.PercentCompleted
-        Write-Progress @Progress
-        Start-Sleep -Milliseconds ( Get-Random -Minimum 100 -Maximum 750 )
-    }
-    Write-Progress -Id $Progress.Id -Activity $Progress.Activity -Completed
-}
-
-#endregion DEMO
